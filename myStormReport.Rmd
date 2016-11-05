@@ -32,7 +32,22 @@ stormData = read.csv(bzfile("repdata-data-StormData.csv.bz2"), header = TRUE)
 Select the columns.
 ```{r SelectColumn}
 subStormData <- 
-        stormData[,c("EVTYPE", "FATALITIES", "INJURIES", "PROPDMG")]
+         stormData[,c("EVTYPE", "FATALITIES", "INJURIES", "PROPDMG","PROPDMGEXP", "CROPDMG", "CROPDMGEXP")]	
+```
+ 	
+Combine "PROPDMG", "PROPDMGEXP" in dollar and same for "CROPDMG", "CROPDMGEXP"
+```{r combine Columns, message=FALSE}
+library(dplyr)
+subStormData = subStormData %>%
+  mutate(
+    x = PROPDMGEXP,
+    x = ifelse(x=='K', 1e+03, ifelse(x=='M', 1e+06, ifelse(x=='B', 1e+09, 1))),
+    PROPDMG = PROPDMG * x,
+    y = CROPDMGEXP,
+    y = ifelse(y=='K', 1e+03, ifelse(y=='M', 1e+06, ifelse(y=='B', 1e+09, 1))),
+    CROPDMG = CROPDMG * y
+  ) %>%
+  select(-c(PROPDMGEXP, CROPDMGEXP, x, y)) 
 ```
 Make event names meanful.
 ```{r MeanfulNames}
@@ -71,7 +86,7 @@ topInjuries$eventType <-
 Do the top 10 events of property damage.
 ```{r Top 10 property damage}
 propDmgData <-
-        aggregate(subStormData$PROPDMG, 
+        aggregate((subStormData$PROPDMG+subStormData$CROPDMG)/1000000, 
                 by=list(subStormData$EVTYPE), FUN=sum, na.rm=TRUE)
 colnames(propDmgData) = c("eventType", "propDmgTotal")
 propDmgSorted <- propDmgData[order(-propDmgData$propDmgTotal),] 
@@ -106,6 +121,6 @@ Plot the top 10 types of events for property damage.
 ```{r Plot top 10 property damage}
 ggplot(data=topPropDmg, aes(x=eventType, y=propDmgTotal)) + 
     geom_bar(stat="identity") + xlab("Event type") + 
-    ylab("Total property damage($)") +  ggtitle("The Greatest Property Damage (in dollars)") + 
+    ylab("Total property damage($ in millions)") +  ggtitle("The Greatest Property Damage (in dollars)") + 
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
