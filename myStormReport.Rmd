@@ -1,0 +1,112 @@
+---
+title: "Most harmful event with respect to health and economic"
+author: "Frank Guan"
+date: "November 3, 2016"
+output: html_document
+---
+
+
+Synopsis
+--------
+Storms and other severe weather events, tornadoes, excessive heat, and flash floods can cause both public health and economic problems.
+
+
+Many severe events, tornadoes, thunderstorm winds, and flash floods can result in fatalities, injuries, and property damage, and preventing such outcomes to the extent possible is a key concern..
+
+
+The storm data are taken from <a href="https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2">the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database</a>. The data starts from the year 1950 to the end of November 2011.  Fatalities, injuries, and property damage (in dollars) are totaled over that time.  
+
+
+References:
+
+[1]: <a href="https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf">National Weather Service Storm Data Documentation</a>
+
+[2]: <a href="https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2FNCDC%20Storm%20Events-FAQ%20Page.pdf">National Climatic Data Center Storm Events FAQ</a>
+
+Data Processing
+---------------
+Load data.
+```{r LoadData, cache=TRUE}
+stormData = read.csv(bzfile("repdata-data-StormData.csv.bz2"), header = TRUE)
+```
+Select the columns.
+```{r SelectColumn}
+subStormData <- 
+        stormData[,c("EVTYPE", "FATALITIES", "INJURIES", "PROPDMG")]
+```
+Make event names meanful.
+```{r MeanfulNames}
+subStormData$EVTYPE <- 
+    gsub("^HEAT$", "EXCESSIVE HEAT", subStormData$EVTYPE)
+subStormData$EVTYPE <- 
+    gsub("^TSTM WIND$", "MARINE THUNDERSTORM WIND", subStormData$EVTYPE)
+```
+
+Find the top 10 events of fatalities.
+```{r Top 10 Fatalities}
+fatalitiesData <-
+        aggregate(subStormData$FATALITIES, 
+                by=list(subStormData$EVTYPE), FUN=sum, na.rm=TRUE)
+colnames(fatalitiesData) = c("eventType", "fatalityTotal")
+fatalitiesSorted <- 
+    fatalitiesData[order(-fatalitiesData$fatalityTotal),] 
+topfatalities <- fatalitiesSorted[1:10,]
+topfatalities$eventType <- 
+    factor(
+        topfatalities$eventType, levels=topfatalities$eventType, 
+        ordered=TRUE)
+```
+Do the top 10 events of injuries.
+```{r Top 10 injuries}
+injuriesData <-
+        aggregate(subStormData$INJURIES, 
+                by=list(subStormData$EVTYPE), FUN=sum, na.rm=TRUE)
+colnames(injuriesData) = c("eventType", "injuryTotal")
+injuriesSorted <- injuriesData[order(-injuriesData$injuryTotal),] 
+topInjuries <- injuriesSorted[1:10,]
+topInjuries$eventType <- 
+    factor( topInjuries$eventType, levels=topInjuries$eventType, 
+        ordered=TRUE)
+```
+Do the top 10 events of property damage.
+```{r Top 10 property damage}
+propDmgData <-
+        aggregate(subStormData$PROPDMG, 
+                by=list(subStormData$EVTYPE), FUN=sum, na.rm=TRUE)
+colnames(propDmgData) = c("eventType", "propDmgTotal")
+propDmgSorted <- propDmgData[order(-propDmgData$propDmgTotal),] 
+topPropDmg <- propDmgSorted[1:10,]
+topPropDmg$eventType <- 
+    factor(
+        topPropDmg$eventType, levels=topPropDmg$eventType, 
+        ordered=TRUE)
+```
+
+
+Results
+-------
+Plot the top 10 types of events for fatalities.
+```{r Plot top 10 fatalities}
+library(ggplot2)
+ggplot(data=topfatalities, aes(x=eventType, y=fatalityTotal)) + 
+    geom_bar(stat="identity") + xlab("Event type") + ylab("Total fatalities") + 
+    ggtitle("Most Harmful Event Type w.r.t. Fatalities") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+Plot the top 10 types of events for injuries.
+```{r Plot top 10 injuries.}
+ggplot(data=topInjuries, aes(x=eventType, y=injuryTotal)) + 
+    geom_bar(stat="identity") + xlab("Event type") + ylab("Total injuries") + 
+    ggtitle("Most Harmful Event Type w.r.t. Injuries") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+Plot the top 10 types of events for property damage.
+```{r Plot top 10 property damage}
+ggplot(data=topPropDmg, aes(x=eventType, y=propDmgTotal)) + 
+    geom_bar(stat="identity") + xlab("Event type") + 
+    ylab("Total property damage($)") +  ggtitle("The Greatest Property Damage (in dollars)") + 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
