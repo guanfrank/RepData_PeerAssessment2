@@ -102,7 +102,6 @@ ggplot(data=topInjuries, aes(x=eventType, y=injuryTotal)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-
 Plot the top 10 types of events for property damage.
 ```{r Plot top 10 property damage}
 ggplot(data=topPropDmg, aes(x=eventType, y=propDmgTotal)) + 
